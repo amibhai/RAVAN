@@ -1,0 +1,44 @@
+# RAVAN engagement scope — sample.
+#
+# This file is the authorized-use allow-list. The engine loads it and refuses to
+# act against any target, tactic, technique, permission, or time outside it.
+# Copy it per engagement; never point RAVAN at infrastructure you are not
+# explicitly authorized to test.
+
+name: home-lab-range
+description: >
+  Authorized scope for the personal home lab / CTF range only. All targets are
+  RFC 1918 / lab-local hosts under the operator's control.
+operator: swastik
+
+scope:
+  # Allowed targets. Accepts hostnames (exact match) and IPs or CIDR networks
+  # (membership match). A target not covered here is refused and logged.
+  targets:
+    - 10.10.0.0/24
+    - 192.168.56.0/24
+    - lab.local
+    - target01.lab.local
+
+  # ATT&CK tactics the engagement authorizes. A head whose tactic is not listed
+  # is refused before it runs. Phase 0 ships only the reconnaissance head.
+  allowed_tactics:
+    - reconnaissance
+    - resource-development
+
+  # Optional finer-grained technique allow-list. Empty means "any technique
+  # within an allowed tactic". Populate with ATT&CK IDs (e.g. T1595) to restrict.
+  allowed_techniques: []
+
+  # Capabilities the engagement grants. A head declares required_permissions;
+  # the engine refuses to run it unless every one is granted here.
+  permissions:
+    - active-scan
+    - passive-recon
+    - wordlist-generation
+
+  # Engagement time window (ISO-8601). Actions outside it are refused. Either
+  # bound may be omitted to leave that side open.
+  time_window:
+    start: 2026-08-01T00:00:00Z
+    end: 2026-12-31T23:59:59Z
