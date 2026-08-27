@@ -1,0 +1,67 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ravan"
+version = "0.0.0"
+description = "A ten-headed modular adversary emulation framework for authorized security testing."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { file = "LICENSE" }
+authors = [{ name = "Swastik" }]
+keywords = ["security", "adversary-emulation", "mitre-attack", "purple-team", "detection"]
+dependencies = [
+    "pydantic>=2.6",
+    "PyYAML>=6.0",
+    "typer>=0.12",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "ruff>=0.6",
+    "mypy>=1.10",
+    "types-PyYAML>=6.0",
+]
+
+[project.scripts]
+ravan = "ravan.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["ravan*"]
+
+[tool.setuptools.package-data]
+ravan = ["py.typed"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "C4", "RUF"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["ravan"]
+known-local-folder = ["conftest"]
+
+[tool.ruff.lint.per-file-ignores]
+# Test-only heads set class attributes that ruff's RUF012 would want annotated,
+# and importing the local conftest helper is fine.
+"tests/*" = ["RUF012"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+plugins = ["pydantic.mypy"]
+warn_unused_configs = true
+files = ["ravan"]
+
+[tool.pydantic-mypy]
+init_forbid_extra = true
+init_typed = true
+warn_required_dynamic_aliases = true
