@@ -8,9 +8,10 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Annotated
+from typing import Annotated, Any
 
 import typer
+import yaml
 
 from ravan.core.engine import Engine
 from ravan.core.exceptions import HeadNotFound, ScopeConfigError, ScopeViolation
@@ -36,6 +37,24 @@ def _load_scope(path: Path) -> EngagementScope:
     except ScopeConfigError as exc:
         typer.echo(f"invalid engagement scope: {exc}", err=True)
         raise typer.Exit(2) from exc
+
+
+def _parse_options(items: list[str]) -> dict[str, Any]:
+    """Parse ``--option key=value`` pairs; values are read as YAML scalars, so
+    ``ports=top100`` is a str, ``threads=50`` an int, ``operations=[dns,tls]`` a
+    list."""
+    options: dict[str, Any] = {}
+    for item in items:
+        if "=" not in item:
+            typer.echo(f"invalid --option {item!r}; expected key=value", err=True)
+            raise typer.Exit(2)
+        key, raw = item.split("=", 1)
+        try:
+            value = yaml.safe_load(raw)
+        except yaml.YAMLError:
+            value = raw
+        options[key.strip()] = value
+    return options
 
 
 @app.command("list")
@@ -87,9 +106,14 @@ def run(
         bool,
         typer.Option("--no-log", help="Do not write a JSONL engagement log file."),
     ] = False,
+    option: Annotated[
+        list[str] | None,
+        typer.Option("--option", "-O", help="Head option override, key=value (repeatable)."),
+    ] = None,
 ) -> None:
     """Validate the scope, then dispatch a head under it."""
     engagement = _load_scope(scope)
+    options = _parse_options(option or [])
 
     sinks: list[EventSink] = [ConsoleSink()]
     file_sink: JsonlFileSink | None = None
@@ -100,7 +124,7 @@ def run(
 
     engine = Engine(engagement, sink=MultiSink(*sinks))
     try:
-        result = engine.run_head(head)
+        result = engine.run_head(head, options=options)
     except HeadNotFound as exc:
         typer.echo(f"error: {exc}", err=True)
         raise typer.Exit(2) from exc

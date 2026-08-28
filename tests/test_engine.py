@@ -14,12 +14,37 @@ from ravan.core.engine import Engine
 from ravan.core.exceptions import HeadNotFound, ScopeViolation
 from ravan.core.loader import StaticLoader
 from ravan.core.sinks import ListSink
-from ravan.heads.recon.head import ReconHead
 from ravan.schemas.events import HeadReport, Outcome, Tactic
 
 from conftest import AFTER_WINDOW, IN_WINDOW, clock_at, make_scope
 
 # --- test-only heads (module 'test_engine', so the real loader ignores them) ---
+# A lightweight, no-network stand-in head keeps these engine tests focused on
+# scope enforcement / isolation without invoking the real recon scanner.
+
+
+class ProbeHead(BaseHead):
+    head_name = "probe"
+    technique_id = "T1595"
+    technique_name = "Active Scanning"
+    tactic = Tactic.RECONNAISSANCE
+    required_permissions = ("active-scan",)
+
+    def __init__(self) -> None:
+        self._processed: list[str] = []
+
+    def run(self, context: RunContext) -> None:
+        for target in context.targets:
+            authorized = context.authorize(target)
+            context.record(target=authorized, outcome=Outcome.SUCCESS, details={"probe": "noop"})
+            self._processed.append(authorized)
+
+    def report(self) -> HeadReport:
+        joined = ", ".join(self._processed) or "(none)"
+        return self.build_report(f"probe processed {len(self._processed)} target(s): {joined}")
+
+    def cleanup(self) -> None:
+        self._processed.clear()
 
 
 class CrashHead(BaseHead):
@@ -57,7 +82,7 @@ class OutOfScopeTargetHead(BaseHead):
 
 
 def _engine(scope, sink: ListSink, heads=None, clock=None) -> Engine:
-    loader = StaticLoader(heads or {"recon": ReconHead})
+    loader = StaticLoader(heads or {"probe": ProbeHead})
     return Engine(scope, sink=sink, loader=loader, clock=clock or clock_at(IN_WINDOW))
 
 
@@ -67,7 +92,7 @@ def _engine(scope, sink: ListSink, heads=None, clock=None) -> Engine:
 def test_in_scope_run_succeeds() -> None:
     sink = ListSink()
     engine = _engine(make_scope(), sink)
-    result = engine.run_head("recon")
+    result = engine.run_head("probe")
 
     assert result.status == "ok"
     assert len(result.events) == 2  # one per in-scope target
@@ -84,7 +109,7 @@ def test_report_runs_before_cleanup() -> None:
     # that still names the processed targets proves report() ran first.
     sink = ListSink()
     engine = _engine(make_scope(), sink)
-    result = engine.run_head("recon")
+    result = engine.run_head("probe")
 
     assert result.report is not None
     assert "processed 2" in result.report.summary
@@ -100,7 +125,7 @@ def test_out_of_scope_tactic_is_refused() -> None:
     engine = _engine(scope, sink)
 
     with pytest.raises(ScopeViolation):
-        engine.run_head("recon")
+        engine.run_head("probe")
 
     # The refusal was logged as a BLOCKED event.
     assert len(sink.events) == 1
@@ -114,7 +139,7 @@ def test_missing_permission_is_refused() -> None:
     engine = _engine(scope, sink)
 
     with pytest.raises(ScopeViolation):
-        engine.run_head("recon")
+        engine.run_head("probe")
 
     assert sink.events[-1].outcome is Outcome.BLOCKED
     assert "permission" in sink.events[-1].details["reason"]
@@ -125,7 +150,7 @@ def test_action_outside_time_window_is_refused() -> None:
     engine = _engine(make_scope(), sink, clock=clock_at(AFTER_WINDOW))
 
     with pytest.raises(ScopeViolation):
-        engine.run_head("recon")
+        engine.run_head("probe")
 
     assert sink.events[-1].outcome is Outcome.BLOCKED
     assert "time window" in sink.events[-1].details["reason"]
@@ -137,7 +162,7 @@ def test_disallowed_technique_is_refused() -> None:
     engine = _engine(scope, sink)
 
     with pytest.raises(ScopeViolation):
-        engine.run_head("recon")
+        engine.run_head("probe")
 
     assert sink.events[-1].outcome is Outcome.BLOCKED
 

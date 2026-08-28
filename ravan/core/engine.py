@@ -11,9 +11,10 @@ and logged; it cannot take down the engine.
 from __future__ import annotations
 
 import traceback
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
+from typing import Any
 
 from ravan.core.base import BaseHead, RunContext
 from ravan.core.exceptions import HeadNotFound, ScopeViolation
@@ -54,10 +55,22 @@ class Engine:
     def available_heads(self) -> dict[str, type[BaseHead]]:
         return self.loader.discover()
 
+    def _scope_head_options(self, head_name: str) -> dict[str, Any]:
+        """Per-head config declared under the engagement's ``heads`` block."""
+        heads_block = self.scope.metadata.get("heads")
+        if isinstance(heads_block, Mapping):
+            head_cfg = heads_block.get(head_name)
+            if isinstance(head_cfg, Mapping):
+                return dict(head_cfg)
+        return {}
+
     # -- dispatch -------------------------------------------------------------
 
-    def run_head(self, head_name: str) -> RunResult:
+    def run_head(self, head_name: str, *, options: Mapping[str, Any] | None = None) -> RunResult:
         """Instantiate, scope-check, and run a head.
+
+        ``options`` overrides the head's configuration from the engagement's
+        ``heads`` block (caller-supplied keys win).
 
         Raises :class:`HeadNotFound` for an unknown head and
         :class:`ScopeViolation` for a whole-head scope refusal (disallowed
@@ -74,6 +87,8 @@ class Engine:
         # Whole-head scope preflight. Emits a BLOCKED event and raises on refusal.
         self._preflight(head)
 
+        merged_options = {**self._scope_head_options(head_name), **(options or {})}
+
         # Every event produced during this run (head- or engine-emitted) is
         # captured here so RunResult.events is the authoritative per-run log.
         captured: list[TechniqueEvent] = []
@@ -82,7 +97,13 @@ class Engine:
             captured.append(event)
             self.sink(event)
 
-        context = RunContext(head=head, scope=self.scope, sink=run_sink, clock=self.clock)
+        context = RunContext(
+            head=head,
+            scope=self.scope,
+            sink=run_sink,
+            clock=self.clock,
+            options=merged_options,
+        )
         head._run_events = context.events  # what the head's own report() reads
 
         status = "ok"

@@ -38,11 +38,15 @@ class RunContext:
         scope: EngagementScope,
         sink: EventSink,
         clock: Callable[[], datetime],
+        options: dict[str, Any] | None = None,
     ) -> None:
         self._head = head
         self._scope = scope
         self._sink = sink
         self._clock = clock
+        #: Per-run head configuration, merged from the engagement's ``heads``
+        #: block and any CLI overrides. Heads read their tuning from here.
+        self.options: dict[str, Any] = dict(options or {})
         self.events: list[TechniqueEvent] = []
 
     @property
@@ -60,6 +64,11 @@ class RunContext:
 
     def now(self) -> datetime:
         return self._clock()
+
+    def option(self, key: str, default: Any = None) -> Any:
+        """Read a per-run head option (from the engagement ``heads`` block or a
+        CLI ``--option`` override)."""
+        return self.options.get(key, default)
 
     def authorize(self, target: str) -> str:
         """Structural per-target scope gate.

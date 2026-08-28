@@ -33,6 +33,8 @@ include = ["ravan*"]
 
 [tool.setuptools.package-data]
 ravan = ["py.typed"]
+"ravan.heads.recon" = ["data/*.json", "data/*.txt"]
+"ravan.heads.resource_development" = ["data/*.json", "data/*.txt"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
