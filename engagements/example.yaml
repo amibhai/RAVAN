@@ -42,3 +42,27 @@ scope:
   time_window:
     start: 2026-08-01T00:00:00Z
     end: 2026-12-31T23:59:59Z
+
+# Per-head configuration. Merged under the engine's scope enforcement; CLI
+# --option key=value overrides any value here. Domains referenced by a head
+# (e.g. resdev's target domain) must still be inside scope.targets above.
+heads:
+  recon:
+    operations: [discover, portscan, services, vuln, dns, tls, http]
+    ports: top100          # top20 | top100 | top1000 | all | "22,80,443" | "1-1024"
+    timeout: 1.5           # per-connection seconds
+    workers: 100           # concurrent probes
+    max_hosts: 256         # CIDR expansion cap
+    dns_subdomains: true
+    # dns_resolver: 10.10.0.1   # optional: enumerate NS/MX/TXT via this resolver
+
+  resdev:
+    company: "Acme Corp"
+    domain: lab.local              # must be in scope.targets
+    employees: ["Rahul Sharma", "Priya Patel"]
+    location: Mumbai
+    founded_year: "2011"
+    keywords: [acme, widgets]
+    max_words: 50000
+    export_rules: true
+    rules_tier: standard           # basic | standard | exhaustive

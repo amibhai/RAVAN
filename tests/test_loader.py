@@ -13,11 +13,11 @@ def test_discovers_recon_head() -> None:
     assert heads["recon"] is ReconHead
 
 
-def test_phase0_exposes_only_recon() -> None:
-    # The other nine tactic subpackages are empty stubs in Phase 0, so no head
-    # class should be registered for them yet.
+def test_exposes_recon_and_resdev() -> None:
+    # Phase 1 activates the recon and resource-development heads; the remaining
+    # tactic subpackages are still empty stubs and register nothing.
     heads = HeadLoader().discover()
-    assert set(heads) == {"recon"}
+    assert set(heads) == {"recon", "resdev"}
 
 
 def test_discovery_has_no_load_errors() -> None:

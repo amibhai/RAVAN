@@ -19,9 +19,10 @@ env/
 .coverage
 htmlcov/
 
-# Engagement logs — never commit real engagement output
+# Engagement logs & generated artifacts — never commit real engagement output
 engagements/logs/*
 !engagements/logs/.gitkeep
+engagements/artifacts/
 
 # Editor / OS
 .vscode/
