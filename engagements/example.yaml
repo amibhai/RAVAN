@@ -25,6 +25,8 @@ scope:
   allowed_tactics:
     - reconnaissance
     - resource-development
+    - credential-access
+    - lateral-movement
 
   # Optional finer-grained technique allow-list. Empty means "any technique
   # within an allowed tactic". Populate with ATT&CK IDs (e.g. T1595) to restrict.
@@ -36,6 +38,8 @@ scope:
     - active-scan
     - passive-recon
     - wordlist-generation
+    - credential-attack
+    - lateral-movement
 
   # Engagement time window (ISO-8601). Actions outside it are refused. Either
   # bound may be omitted to leave that side open.
@@ -66,3 +70,25 @@ heads:
     max_words: 50000
     export_rules: true
     rules_tier: standard           # basic | standard | exhaustive
+
+  credaccess:
+    protocol: ssh                  # ftp|ssh|http-basic|http-form|smtp|pop3|imap|telnet|redis
+    mode: defaults                 # dictionary|spray|smart|defaults|combo
+    # users: [admin, root]
+    # passwords: [Password1!, Summer2026!]
+    # company: "Acme Corp"         # used by 'smart' mode
+    timeout: 5.0
+    workers: 8
+    lockout_threshold: 5           # skip a user nearing lockout
+    lockout_window: 300
+    stop_on_success: true
+    # delay: 0.0                    # per-attempt delay + jitter for rate control
+    # jitter: 0.0
+
+  lateral:
+    protocols: [ssh]               # protocols to test for credential reuse
+    # credentials: ["admin:Password1!"]   # or discovered by the credaccess head
+    # creds_file: found_creds.txt
+    timeout: 5.0
+    workers: 16
+    max_hosts: 256                 # CIDR expansion cap when reusing across a subnet
