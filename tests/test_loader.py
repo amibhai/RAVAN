@@ -14,10 +14,10 @@ def test_discovers_recon_head() -> None:
 
 
 def test_exposes_active_heads() -> None:
-    # recon + resdev (Phase 1) plus the credential-access head; the remaining
-    # tactic subpackages are still empty stubs and register nothing.
+    # Phases 1-2 activate four heads; the remaining tactic subpackages are still
+    # empty stubs and register nothing.
     heads = HeadLoader().discover()
-    assert set(heads) == {"recon", "resdev", "credaccess"}
+    assert set(heads) == {"recon", "resdev", "credaccess", "lateral"}
 
 
 def test_discovery_has_no_load_errors() -> None:
