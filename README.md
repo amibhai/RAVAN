@@ -16,18 +16,18 @@ It is built strictly for **authorized environments**: your own lab, a CTF range,
 
 ### The ten heads (ATT&CK tactic modules)
 
-| # | Head | ATT&CK Tactic | Draws from existing work |
-|---|------|---------------|---------------------------|
-| 1 | Reconnaissance | Reconnaissance | `SHIV-reconnaissance_toolkit` |
-| 2 | Resource Development | Resource Development | `wordsmith` (targeted wordlist generation) |
-| 3 | Initial Access | Initial Access | new |
-| 4 | Execution | Execution | new |
-| 5 | Persistence | Persistence | new |
-| 6 | Credential Access | Credential Access | `credential-attacks-toolkit` |
-| 7 | Lateral Movement | Lateral Movement | `spoofed` (LLMNR/NBT-NS, interception) |
-| 8 | Collection | Collection | new |
-| 9 | Exfiltration | Exfiltration | new, metadata-resistant patterns informed by `Parda` |
-| 10 | Command & Control | Command and Control | new |
+| # | Head (`name`) | ATT&CK Tactic | Draws from existing work | Status |
+|---|------|---------------|---------------------------|--------|
+| 1 | Reconnaissance (`recon`) | Reconnaissance | `SHIV-reconnaissance_toolkit` | ✅ done |
+| 2 | Resource Development (`resdev`) | Resource Development | `wordsmith` (targeted wordlist generation) | ✅ done |
+| 3 | Initial Access | Initial Access | new | planned |
+| 4 | Execution | Execution | new | planned |
+| 5 | Persistence | Persistence | new | planned |
+| 6 | Credential Access (`credaccess`) | Credential Access | `credential-attacks-toolkit` | ✅ done |
+| 7 | Lateral Movement (`lateral`) | Lateral Movement | credential reuse (T1021/T1078) | ✅ done |
+| 8 | Collection | Collection | new | planned |
+| 9 | Exfiltration | Exfiltration | new, metadata-resistant patterns informed by `Parda` | planned |
+| 10 | Command & Control | Command and Control | new | planned |
 
 Each head is a self-contained plugin implementing a shared interface (`run()`, `cleanup()`, `report()`), so heads can be added, removed, or swapped without touching the core engine.
 
@@ -50,6 +50,44 @@ This is the piece most adversary-emulation student projects skip — running att
 
 ---
 
+## Install
+
+```bash
+python -m venv .venv
+. .venv/bin/activate            # Windows: .venv\Scripts\activate
+pip install -e ".[dev]"         # add the optional SSH backend: pip install -e ".[dev,ssh]"
+```
+
+The engine and the currently-implemented heads run on **pure Python stdlib** — no
+root, no scapy, no external binaries — so they behave identically on Windows,
+Linux, and macOS. The only optional dependency so far is `paramiko` (SSH).
+
+## Quick start
+
+```bash
+ravan list                                        # list discovered heads
+ravan validate --scope engagements/example.yaml   # validate an engagement scope
+
+# Reconnaissance — TCP scan + service/CVE/DNS/TLS/HTTP, ATT&CK-tagged JSONL
+ravan run recon --scope engagements/example.yaml -O ports=top100
+
+# Resource Development — target-tailored wordlist + hashcat rules
+ravan run resdev --scope engagements/example.yaml -O domain=lab.local -O company="Acme Corp"
+
+# Credential Access — lockout-aware brute force
+ravan run credaccess --scope engagements/example.yaml -O protocol=ssh -O mode=defaults
+
+# Lateral Movement — validate credential reuse across in-scope hosts
+ravan run lateral --scope engagements/example.yaml \
+  -O 'protocols=[ssh]' -O 'credentials=[admin:Password1!]'
+```
+
+Every action is scope-gated at the engine level and emits a structured
+`TechniqueEvent` to a JSONL engagement log. Per-head settings live under the
+engagement's `heads:` block and can be overridden with `-O key=value`.
+
+---
+
 ## Approach
 
 The build is deliberately incremental — one head fully working (engine, logging, tests, docs) before the next begins, rather than ten shallow stubs at once. This keeps the framework demoable at every stage and avoids a half-finished sprawl.
@@ -64,20 +102,20 @@ The build is deliberately incremental — one head fully working (engine, loggin
 
 ## Phases
 
-### Phase 0 — Foundation
+### Phase 0 — Foundation ✅
 - Repo scaffold, plugin interface (`BaseHead` abstract class), `TechniqueEvent` schema
 - Engagement scope config (YAML) + enforcement layer
 - CLI skeleton (`ravan run <head> --scope engagement.yaml`)
 - CI: lint, type-check, basic scope-enforcement tests
 
-### Phase 1 — Recon + Resource Development (Heads 1–2)
+### Phase 1 — Recon + Resource Development (Heads 1–2) ✅
 - Port and refactor `SHIV-reconnaissance_toolkit` logic into the plugin interface
 - Port `wordsmith` as the Resource Development head
 - First end-to-end structured log output validated
 
-### Phase 2 — Credential Access + Lateral Movement (Heads 6–7)
-- Port `credential-attacks-toolkit` and `spoofed` into plugin form
-- These are your most mature existing modules — fastest phase to complete
+### Phase 2 — Credential Access + Lateral Movement (Heads 6–7) ✅
+- Port `credential-attacks-toolkit` into a shared credential library + `credaccess` head
+- `lateral` head validates credential reuse across in-scope hosts (T1021/T1078)
 
 ### Phase 3 — Execution, Persistence, Initial Access (Heads 3–5)
 - New modules, built to the same interface
@@ -111,4 +149,7 @@ RAVAN is built for authorized security testing only — your own infrastructure,
 
 ## Status
 
-🚧 Early development — Phase 0 in progress.
+Active development. **Phases 0–2 complete** — the engine with structural scope
+enforcement, plus heads 1, 2, 6, and 7 (Reconnaissance, Resource Development,
+Credential Access, Lateral Movement). Phase 3 (Execution, Persistence, Initial
+Access) is next. See [CHANGELOG.md](CHANGELOG.md) for the full history.
