@@ -1,11 +1,11 @@
-"""Initial Access head — stub.
+"""Initial Access head package (Head #3).
 
-Empty placeholder for Phase 0. Implemented in Phase 3.
-Draws from: new.
-
-To activate: add a module here defining a concrete
-`ravan.core.base.BaseHead` subclass; the plugin loader will discover it
-automatically by its `head_name`.
+Valid-account foothold (ATT&CK T1078) and benign phishing-lure generation
+(T1566).
 """
 
 from __future__ import annotations
+
+from ravan.heads.initial_access.head import InitialAccessHead
+
+__all__ = ["InitialAccessHead"]

@@ -1,11 +1,10 @@
-"""Execution head — stub.
+"""Execution head package (Head #4).
 
-Empty placeholder for Phase 0. Implemented in Phase 3.
-Draws from: new.
-
-To activate: add a module here defining a concrete
-`ravan.core.base.BaseHead` subclass; the plugin loader will discover it
-automatically by its `head_name`.
+Benign command execution via native interpreters (ATT&CK T1059, T1047).
 """
 
 from __future__ import annotations
+
+from ravan.heads.execution.head import ExecutionHead
+
+__all__ = ["ExecutionHead"]

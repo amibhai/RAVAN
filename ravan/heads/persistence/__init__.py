@@ -1,11 +1,10 @@
-"""Persistence head — stub.
+"""Persistence head package (Head #5).
 
-Empty placeholder for Phase 0. Implemented in Phase 3.
-Draws from: new.
-
-To activate: add a module here defining a concrete
-`ravan.core.base.BaseHead` subclass; the plugin loader will discover it
-automatically by its `head_name`.
+Benign, self-cleaning autostart artifacts (ATT&CK T1547, T1053, T1543, T1546).
 """
 
 from __future__ import annotations
+
+from ravan.heads.persistence.head import PersistenceHead
+
+__all__ = ["PersistenceHead"]
