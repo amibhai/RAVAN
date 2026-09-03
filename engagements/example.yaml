@@ -19,6 +19,7 @@ scope:
     - 192.168.56.0/24
     - lab.local
     - target01.lab.local
+    - localhost            # authorizes local emulation (execution/persistence heads)
 
   # ATT&CK tactics the engagement authorizes. A head whose tactic is not listed
   # is refused before it runs. Phase 0 ships only the reconnaissance head.
@@ -27,6 +28,9 @@ scope:
     - resource-development
     - credential-access
     - lateral-movement
+    - execution
+    - persistence
+    - initial-access
 
   # Optional finer-grained technique allow-list. Empty means "any technique
   # within an allowed tactic". Populate with ATT&CK IDs (e.g. T1595) to restrict.
@@ -40,6 +44,9 @@ scope:
     - wordlist-generation
     - credential-attack
     - lateral-movement
+    - execute-emulation
+    - persistence-emulation
+    - initial-access
 
   # Engagement time window (ISO-8601). Actions outside it are refused. Either
   # bound may be omitted to leave that side open.
@@ -92,3 +99,18 @@ heads:
     timeout: 5.0
     workers: 16
     max_hosts: 256                 # CIDR expansion cap when reusing across a subnet
+
+  execution:
+    # atomics: [python, powershell, cmd, sh, wmi]   # default: all applicable to this OS
+    timeout: 15
+
+  persistence:
+    # atomics: [registry-run-key, startup-folder, scheduled-task, systemd-user-service, shell-profile, launch-agent]
+    keep: false            # false = revert every artifact after the run (lab-safe)
+    timeout: 15
+
+  initaccess:
+    operations: [phishing-lure]    # [valid-accounts, phishing-lure]
+    lure_types: [vba-macro, hta, script-js, html]
+    # protocol: ssh                # for valid-accounts (foothold via T1078)
+    # credentials: ["admin:Password1!"]

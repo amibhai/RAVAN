@@ -1,5 +1,19 @@
 # RAVAN
 
+```
+     /^\ /^\ /^\ /^\ /^\ /^\ /^\ /^\ /^\ /^\
+    (o_o|o_o|o_o|o_o|o_o|o_o|o_o|o_o|o_o|o_o)   ← ten heads
+     `"""""""""""""""""""""""""""""""""""""`
+                     \__|__/
+    ██████╗  █████╗ ██╗   ██╗ █████╗ ███╗   ██╗
+    ██╔══██╗██╔══██╗██║   ██║██╔══██╗████╗  ██║
+    ██████╔╝███████║██║   ██║███████║██╔██╗ ██║
+    ██╔══██╗██╔══██║╚██╗ ██╔╝██╔══██║██║╚██╗██║
+    ██║  ██║██║  ██║ ╚████╔╝ ██║  ██║██║ ╚████║
+    ╚═╝  ╚═╝╚═╝  ╚═╝  ╚═══╝  ╚═╝  ╚═╝╚═╝  ╚═══╝
+        ten heads · one engine · ten ATT&CK tactics
+```
+
 **A ten-headed adversary emulation framework — one engine, ten attack tactics, closing the loop from attack to detection.**
 
 > Named for the ten-headed king of Indian myth — mastery across many domains, and the illusion (maya) that made him formidable. RAVAN emulates ten distinct MITRE ATT&CK tactic categories through a single modular engine, so a defender can measure — not assume — what their detections actually catch.
@@ -20,9 +34,9 @@ It is built strictly for **authorized environments**: your own lab, a CTF range,
 |---|------|---------------|---------------------------|--------|
 | 1 | Reconnaissance (`recon`) | Reconnaissance | `SHIV-reconnaissance_toolkit` | ✅ done |
 | 2 | Resource Development (`resdev`) | Resource Development | `wordsmith` (targeted wordlist generation) | ✅ done |
-| 3 | Initial Access | Initial Access | new | planned |
-| 4 | Execution | Execution | new | planned |
-| 5 | Persistence | Persistence | new | planned |
+| 3 | Initial Access (`initaccess`) | Initial Access | new | ✅ done |
+| 4 | Execution (`execution`) | Execution | new | ✅ done |
+| 5 | Persistence (`persistence`) | Persistence | new | ✅ done |
 | 6 | Credential Access (`credaccess`) | Credential Access | `credential-attacks-toolkit` | ✅ done |
 | 7 | Lateral Movement (`lateral`) | Lateral Movement | credential reuse (T1021/T1078) | ✅ done |
 | 8 | Collection | Collection | new | planned |
@@ -80,6 +94,15 @@ ravan run credaccess --scope engagements/example.yaml -O protocol=ssh -O mode=de
 # Lateral Movement — validate credential reuse across in-scope hosts
 ravan run lateral --scope engagements/example.yaml \
   -O 'protocols=[ssh]' -O 'credentials=[admin:Password1!]'
+
+# Execution — benign command execution via native interpreters (needs localhost in scope)
+ravan run execution --scope engagements/example.yaml
+
+# Persistence — benign, self-cleaning autostart artifacts
+ravan run persistence --scope engagements/example.yaml
+
+# Initial Access — benign phishing-lure generation for detection testing
+ravan run initaccess --scope engagements/example.yaml -O 'operations=[phishing-lure]'
 ```
 
 Every action is scope-gated at the engine level and emits a structured
@@ -117,9 +140,9 @@ The build is deliberately incremental — one head fully working (engine, loggin
 - Port `credential-attacks-toolkit` into a shared credential library + `credaccess` head
 - `lateral` head validates credential reuse across in-scope hosts (T1021/T1078)
 
-### Phase 3 — Execution, Persistence, Initial Access (Heads 3–5)
-- New modules, built to the same interface
-- Kept intentionally simple/lab-safe (e.g., scheduled-task persistence, not novel exploit development)
+### Phase 3 — Execution, Persistence, Initial Access (Heads 3–5) ✅
+- Lab-safe atomic emulation (Atomic Red Team model) on a shared `ravan.emulation` library
+- `execution` (T1059/T1047), `persistence` (T1547/T1053/T1543, self-cleaning), `initaccess` (T1078 foothold + T1566 benign lures)
 
 ### Phase 4 — Collection, Exfiltration, C2 (Heads 8–10)
 - Exfiltration module informed by `Parda`'s metadata-resistance research
@@ -149,7 +172,8 @@ RAVAN is built for authorized security testing only — your own infrastructure,
 
 ## Status
 
-Active development. **Phases 0–2 complete** — the engine with structural scope
-enforcement, plus heads 1, 2, 6, and 7 (Reconnaissance, Resource Development,
-Credential Access, Lateral Movement). Phase 3 (Execution, Persistence, Initial
-Access) is next. See [CHANGELOG.md](CHANGELOG.md) for the full history.
+Active development. **Phases 0–3 complete** — the engine with structural scope
+enforcement, plus seven heads: Reconnaissance, Resource Development, Credential
+Access, Lateral Movement, Execution, Persistence, and Initial Access. Phase 4
+(Collection, Exfiltration, C2) is next. See [CHANGELOG.md](CHANGELOG.md) for the
+full history.

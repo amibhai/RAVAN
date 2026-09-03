@@ -6,6 +6,34 @@ tagged, so changes are grouped by build phase under **Unreleased**.
 
 ## [Unreleased]
 
+### Phase 3 — Execution, Persistence, Initial Access (2026-08-30)
+
+New lab-safe emulation modules (no existing tool to port), built on the Atomic
+Red Team model — benign, ATT&CK-tagged atomics with idempotent cleanup — wrapped
+in RAVAN's scope-enforced, structured-logging engine. Pure stdlib; cross-platform
+(Windows/Linux/macOS); zero new dependencies.
+
+**Added**
+- Shared emulation library `ravan.emulation`: OS detection, a no-shell benign
+  command runner that captures process telemetry (pid, exit code, output), canary
+  markers, an `Atomic` interface with idempotent `revert()`, and a `LocalAtomicHead`
+  base that authorizes local emulation against the engagement scope.
+- **Execution head** (`execution`, ATT&CK T1059/T1047): benign command execution
+  via native interpreters — Python (T1059.006), PowerShell (T1059.001), cmd
+  (T1059.003), Unix shell (T1059.004), and WMI (T1047) — generating real
+  process-creation telemetry. Requires the `execute-emulation` permission.
+- **Persistence head** (`persistence`, ATT&CK T1547/T1053/T1543/T1546): user-level,
+  benign autostart artifacts — registry Run key, startup file, scheduled task
+  (Windows); systemd user service, shell profile (Linux); launch agent (macOS) —
+  each reverted idempotently after the run (or kept via `keep: true`). Requires the
+  `persistence-emulation` permission.
+- **Initial Access head** (`initaccess`, ATT&CK T1078/T1566): valid-account foothold
+  validation via the credential library (T1078) and benign phishing-lure generation
+  — macro/HTA/script/HTML artifacts for testing mail/endpoint controls, no delivery
+  (T1566). Requires the `initial-access` permission.
+- Local-emulation heads authorize `localhost`/`127.0.0.1`/hostname against the
+  engagement scope, so the operator explicitly authorizes acting on the host.
+
 ### Phase 2 — Credential Access + Lateral Movement (2026-08-29)
 
 Ported `credential-attacks-toolkit` into a shared credential library and two new
